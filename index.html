@@ -1,0 +1,1335 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kuromi Study Timer 💜</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --bg-color: #1a1a2e;
+            --text-color: #ffffff;
+            --kuromi-pink: #ff69b4;
+            --kuromi-white: #ffffff;
+            --kuromi-black: #1a1a2e;
+        }
+
+        body {
+            background: linear-gradient(135deg, #1a1a2e, #16213e, #0f3460);
+            font-family: Arial, sans-serif;
+            color: var(--text-color);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            transition: all 0.3s ease;
+        }
+
+        body.dark-mode {
+            background: linear-gradient(135deg, #f0f0f0, #e0e0e0, #d0d0d0);
+            --text-color: #1a1a2e;
+            --bg-color: #ffffff;
+        }
+
+        /* Settings Panel */
+        .settings-panel {
+            position: fixed;
+            top: 0;
+            right: -300px;
+            width: 300px;
+            height: 100vh;
+            background: rgba(26, 26, 46, 0.95);
+            backdrop-filter: blur(10px);
+            transition: right 0.3s ease;
+            z-index: 1000;
+            padding: 20px;
+            border-left: 2px solid var(--kuromi-pink);
+        }
+
+        body.dark-mode .settings-panel {
+            background: rgba(240, 240, 240, 0.95);
+        }
+
+        .settings-panel.open {
+            right: 0;
+        }
+
+        .settings-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+        }
+
+        .settings-title {
+            color: var(--kuromi-pink);
+            font-size: 1.3em;
+            font-weight: bold;
+        }
+
+        .close-settings {
+            background: none;
+            border: none;
+            color: var(--kuromi-pink);
+            font-size: 24px;
+            cursor: pointer;
+            padding: 5px;
+            border-radius: 50%;
+            transition: all 0.3s ease;
+        }
+
+        .close-settings:hover {
+            background: var(--kuromi-pink);
+            color: white;
+        }
+
+        .setting-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .setting-label {
+            color: var(--text-color);
+            font-weight: bold;
+        }
+
+        /* Toggle Switch */
+        .toggle {
+            position: relative;
+            width: 50px;
+            height: 25px;
+        }
+
+        .toggle input {
+            display: none;
+        }
+
+        .toggle-slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: #ccc;
+            transition: 0.3s;
+            border-radius: 25px;
+        }
+
+        .toggle-slider:before {
+            position: absolute;
+            content: "";
+            height: 19px;
+            width: 19px;
+            left: 3px;
+            bottom: 3px;
+            background-color: white;
+            transition: 0.3s;
+            border-radius: 50%;
+        }
+
+        .toggle input:checked + .toggle-slider {
+            background-color: var(--kuromi-pink);
+        }
+
+        .toggle input:checked + .toggle-slider:before {
+            transform: translateX(25px);
+        }
+
+        /* Presets */
+        .presets {
+            margin-top: 20px;
+        }
+
+        .preset-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin-top: 10px;
+        }
+
+        .preset-btn {
+            padding: 10px;
+            border: 1px solid var(--kuromi-pink);
+            background: transparent;
+            color: var(--text-color);
+            border-radius: 10px;
+            cursor: pointer;
+            font-size: 12px;
+            transition: all 0.3s ease;
+        }
+
+        .preset-btn:hover {
+            background: var(--kuromi-pink);
+            color: white;
+        }
+
+        /* Top Controls */
+        .top-controls {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            width: 100%;
+            max-width: 400px;
+            margin-bottom: 20px;
+        }
+
+        .control-btn {
+            background: rgba(255, 105, 180, 0.2);
+            border: 1px solid var(--kuromi-pink);
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            color: var(--text-color);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+            transition: all 0.3s ease;
+        }
+
+        .control-btn:hover {
+            background: var(--kuromi-pink);
+            color: white;
+            transform: scale(1.1);
+        }
+
+        .current-time {
+            font-family: 'Courier New', monospace;
+            font-size: 18px;
+            font-weight: bold;
+            color: var(--kuromi-pink);
+        }
+
+        /* Main Timer */
+        .timer-container {
+            text-align: center;
+            position: relative;
+        }
+
+        .clock-container {
+            position: relative;
+            width: 350px;
+            height: 350px;
+            margin: 0 auto 30px;
+        }
+
+        .clock-body {
+            width: 100%;
+            height: 100%;
+            background: radial-gradient(circle, var(--kuromi-white), #f0f0f0);
+            border: 4px solid var(--kuromi-black);
+            border-radius: 50%;
+            position: relative;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s ease;
+        }
+
+        body.dark-mode .clock-body {
+            background: radial-gradient(circle, #2c2c54, #1a1a2e);
+            border-color: var(--text-color);
+        }
+
+        /* Kuromi Features */
+        .kuromi-ears {
+            position: absolute;
+            top: -15px;
+            width: 100%;
+        }
+
+        .ear {
+            position: absolute;
+            width: 25px;
+            height: 35px;
+            background: var(--kuromi-black);
+            border-radius: 50% 50% 0 0;
+        }
+
+        body.dark-mode .ear {
+            background: var(--text-color);
+        }
+
+        .ear-left {
+            left: 90px;
+            transform: rotate(-20deg);
+        }
+
+        .ear-right {
+            right: 90px;
+            transform: rotate(20deg);
+        }
+
+        .ear-inside {
+            position: absolute;
+            width: 12px;
+            height: 18px;
+            background: var(--kuromi-pink);
+            border-radius: 50% 50% 0 0;
+            top: 3px;
+            left: 50%;
+            transform: translateX(-50%);
+        }
+
+        .kuromi-bow {
+            position: absolute;
+            top: -30px;
+            right: 70px;
+            z-index: 10;
+        }
+
+        .bow-part {
+            width: 20px;
+            height: 15px;
+            background: #ff1493;
+            border-radius: 50%;
+            position: absolute;
+        }
+
+        .bow-left {
+            left: -8px;
+            transform: rotate(-15deg);
+        }
+
+        .bow-right {
+            right: -8px;
+            transform: rotate(15deg);
+        }
+
+        .bow-center {
+            width: 12px;
+            height: 15px;
+            background: var(--kuromi-pink);
+            left: 50%;
+            transform: translateX(-50%);
+            border-radius: 2px;
+        }
+
+        .skull {
+            position: absolute;
+            top: 1px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 10px;
+        }
+
+        /* Clock Face */
+        .clock-face {
+            position: absolute;
+            width: 280px;
+            height: 280px;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+        }
+
+        .clock-center {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 10px;
+            height: 10px;
+            background: var(--kuromi-black);
+            border-radius: 50%;
+            transform: translate(-50%, -50%);
+            z-index: 10;
+        }
+
+        body.dark-mode .clock-center {
+            background: var(--text-color);
+        }
+
+        .hand {
+            position: absolute;
+            bottom: 50%;
+            left: 50%;
+            transform-origin: bottom center;
+            border-radius: 2px;
+        }
+
+        .hour-hand {
+            width: 4px;
+            height: 60px;
+            background: var(--kuromi-black);
+            margin-left: -2px;
+            z-index: 3;
+        }
+
+        .minute-hand {
+            width: 3px;
+            height: 80px;
+            background: var(--kuromi-black);
+            margin-left: -1.5px;
+            z-index: 4;
+        }
+
+        .second-hand {
+            width: 2px;
+            height: 90px;
+            background: var(--kuromi-pink);
+            margin-left: -1px;
+            z-index: 5;
+        }
+
+        body.dark-mode .hour-hand,
+        body.dark-mode .minute-hand {
+            background: var(--text-color);
+        }
+
+        .clock-numbers {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+        }
+
+        .number {
+            position: absolute;
+            font-weight: bold;
+            color: var(--kuromi-black);
+            font-size: 16px;
+            width: 20px;
+            height: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        body.dark-mode .number {
+            color: var(--text-color);
+        }
+
+        /* Progress Ring */
+        .progress-ring {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%) rotate(-90deg);
+            z-index: 1;
+        }
+
+        .progress-circle {
+            fill: none;
+            stroke: var(--kuromi-pink);
+            stroke-width: 4;
+            stroke-linecap: round;
+            stroke-dasharray: 942;
+            stroke-dashoffset: 942;
+            transition: stroke-dashoffset 1s ease;
+        }
+
+        /* Timer Controls */
+        .timer-inputs {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .input-group {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .time-input {
+            width: 60px;
+            padding: 10px;
+            border: 2px solid var(--kuromi-pink);
+            border-radius: 10px;
+            text-align: center;
+            font-size: 18px;
+            background: var(--kuromi-white);
+            color: var(--kuromi-black);
+            font-weight: bold;
+        }
+
+        .time-input:focus {
+            outline: none;
+            border-color: #ff1493;
+            box-shadow: 0 0 10px rgba(255, 105, 180, 0.5);
+        }
+
+        .time-label {
+            font-size: 12px;
+            color: var(--kuromi-pink);
+            margin-top: 5px;
+            font-weight: bold;
+        }
+
+        .separator {
+            font-size: 24px;
+            font-weight: bold;
+            color: var(--text-color);
+        }
+
+        .countdown {
+            font-size: 48px;
+            font-weight: bold;
+            font-family: 'Courier New', monospace;
+            color: var(--text-color);
+            margin: 20px 0;
+        }
+
+        .status-message {
+            font-size: 16px;
+            color: var(--kuromi-pink);
+            margin: 15px 0;
+            font-weight: bold;
+        }
+
+        .timer-controls {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            margin: 30px 0;
+        }
+
+        .timer-btn {
+            padding: 12px 25px;
+            border: none;
+            border-radius: 25px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+        }
+
+        .start-btn {
+            background: linear-gradient(135deg, var(--kuromi-pink), #ff1493);
+            color: white;
+        }
+
+        .start-btn:hover {
+            background: linear-gradient(135deg, #ff1493, #dc143c);
+            transform: translateY(-2px);
+        }
+
+        .pause-btn {
+            background: linear-gradient(135deg, #ffa500, #ff8c00);
+            color: white;
+            display: none;
+        }
+
+        .pause-btn:hover {
+            background: linear-gradient(135deg, #ff8c00, #ff7f50);
+            transform: translateY(-2px);
+        }
+
+        .stop-btn {
+            background: linear-gradient(135deg, #6c757d, #495057);
+            color: white;
+        }
+
+        .stop-btn:hover {
+            background: linear-gradient(135deg, #495057, #343a40);
+            transform: translateY(-2px);
+        }
+
+        /* Stats */
+        .stats-container {
+            display: flex;
+            gap: 20px;
+            justify-content: center;
+            margin-top: 30px;
+            flex-wrap: wrap;
+        }
+
+        .stat-item {
+            background: rgba(255, 105, 180, 0.1);
+            border: 1px solid var(--kuromi-pink);
+            border-radius: 15px;
+            padding: 15px;
+            text-align: center;
+            min-width: 100px;
+        }
+
+        .stat-value {
+            font-size: 24px;
+            font-weight: bold;
+            color: var(--kuromi-pink);
+            margin-bottom: 5px;
+        }
+
+        .stat-label {
+            font-size: 12px;
+            color: var(--text-color);
+            opacity: 0.8;
+        }
+
+        /* Motivational Message */
+        .motivation {
+            background: rgba(255, 105, 180, 0.1);
+            border: 1px solid var(--kuromi-pink);
+            border-radius: 20px;
+            padding: 15px 25px;
+            margin: 20px auto;
+            max-width: 400px;
+            text-align: center;
+            color: var(--text-color);
+            font-style: italic;
+        }
+
+        /* Animations */
+        .timer-active .clock-body {
+            animation: pulse 2s ease-in-out infinite;
+        }
+
+        .timer-active .kuromi-bow {
+            animation: wiggle 3s ease-in-out infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.02); }
+        }
+
+        @keyframes wiggle {
+            0%, 100% { transform: rotate(0deg); }
+            25% { transform: rotate(-3deg); }
+            75% { transform: rotate(3deg); }
+        }
+
+        .timer-complete .countdown {
+            animation: celebrate 0.5s ease-in-out 6;
+            color: var(--kuromi-pink) !important;
+        }
+
+        @keyframes celebrate {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.2); }
+        }
+
+        .timer-urgent .countdown {
+            animation: urgent 1s ease-in-out infinite;
+            color: #ff4757 !important;
+        }
+
+        @keyframes urgent {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+        }
+
+        /* Notification */
+        .notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 15px 20px;
+            border-radius: 10px;
+            color: white;
+            font-weight: bold;
+            z-index: 2000;
+            animation: slideIn 0.3s ease;
+        }
+
+        .notification.success {
+            background: #28a745;
+        }
+
+        .notification.error {
+            background: #dc3545;
+        }
+
+        @keyframes slideIn {
+            from { transform: translateX(100%); }
+            to { transform: translateX(0); }
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .clock-container {
+                width: 300px;
+                height: 300px;
+            }
+            
+            .countdown {
+                font-size: 36px;
+            }
+            
+            .timer-btn {
+                padding: 10px 20px;
+                font-size: 14px;
+            }
+            
+            .stats-container {
+                gap: 15px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Settings Panel -->
+    <div class="settings-panel" id="settingsPanel">
+        <div class="settings-header">
+            <div class="settings-title">⚙️ Settings</div>
+            <button class="close-settings" id="closeSettings">&times;</button>
+        </div>
+        
+        <div class="setting-item">
+            <div class="setting-label">🔊 Sound Effects</div>
+            <label class="toggle">
+                <input type="checkbox" id="soundToggle" checked>
+                <span class="toggle-slider"></span>
+            </label>
+        </div>
+        
+        <div class="setting-item">
+            <div class="setting-label">🌙 Dark Mode</div>
+            <label class="toggle">
+                <input type="checkbox" id="darkModeToggle">
+                <span class="toggle-slider"></span>
+            </label>
+        </div>
+        
+        <div class="presets">
+            <div class="setting-label">🍅 Quick Presets</div>
+            <div class="preset-grid">
+                <button class="preset-btn" data-seconds="1500">25m Focus</button>
+                <button class="preset-btn" data-seconds="300">5m Break</button>
+                <button class="preset-btn" data-seconds="900">15m Break</button>
+                <button class="preset-btn" data-seconds="1800">30m Study</button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Top Controls -->
+    <div class="top-controls">
+        <button class="control-btn" id="settingsBtn">⚙️</button>
+        <div class="current-time" id="currentTime">00:00:00</div>
+        <button class="control-btn" id="fullscreenBtn">⛶</button>
+    </div>
+    
+    <!-- Main Timer -->
+    <div class="timer-container">
+        <div class="clock-container">
+            <!-- Kuromi Elements -->
+            <div class="kuromi-ears">
+                <div class="ear ear-left">
+                    <div class="ear-inside"></div>
+                </div>
+                <div class="ear ear-right">
+                    <div class="ear-inside"></div>
+                </div>
+            </div>
+            
+            <div class="kuromi-bow">
+                <div class="bow-part bow-left"></div>
+                <div class="bow-part bow-right"></div>
+                <div class="bow-center"></div>
+                <div class="skull">💀</div>
+            </div>
+            
+            <!-- Clock Body -->
+            <div class="clock-body" id="clockBody">
+                <!-- Progress Ring -->
+                <svg class="progress-ring" width="300" height="300">
+                    <circle class="progress-circle" cx="150" cy="150" r="150" id="progressCircle"></circle>
+                </svg>
+                
+                <!-- Clock Face -->
+                <div class="clock-face">
+                    <div class="clock-center"></div>
+                    <div class="hand hour-hand" id="hourHand"></div>
+                    <div class="hand minute-hand" id="minuteHand"></div>
+                    <div class="hand second-hand" id="secondHand"></div>
+                    
+                    <div class="clock-numbers" id="clockNumbers"></div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Timer Inputs -->
+        <div class="timer-inputs">
+            <div class="input-group">
+                <input type="number" class="time-input" id="hoursInput" min="0" max="23" value="0">
+                <div class="time-label">Hours</div>
+            </div>
+            <div class="separator">:</div>
+            <div class="input-group">
+                <input type="number" class="time-input" id="minutesInput" min="0" max="59" value="25">
+                <div class="time-label">Minutes</div>
+            </div>
+            <div class="separator">:</div>
+            <div class="input-group">
+                <input type="number" class="time-input" id="secondsInput" min="0" max="59" value="0">
+                <div class="time-label">Seconds</div>
+            </div>
+        </div>
+        
+        <!-- Countdown Display -->
+        <div class="countdown" id="countdown">25:00</div>
+        
+        <!-- Status Message -->
+        <div class="status-message" id="statusMessage">Ready to focus! 💜</div>
+        
+        <!-- Timer Controls -->
+        <div class="timer-controls">
+            <button class="timer-btn start-btn" id="startBtn">▶️ Start</button>
+            <button class="timer-btn pause-btn" id="pauseBtn">⏸️ Pause</button>
+            <button class="timer-btn stop-btn" id="stopBtn">⏹️ Reset</button>
+        </div>
+    </div>
+    
+    <!-- Stats -->
+    <div class="stats-container">
+        <div class="stat-item">
+            <div class="stat-value" id="totalTime">0m</div>
+            <div class="stat-label">Total Study Time</div>
+        </div>
+        <div class="stat-item">
+            <div class="stat-value" id="completedSessions">0</div>
+            <div class="stat-label">Completed Sessions</div>
+        </div>
+        <div class="stat-item">
+            <div class="stat-value" id="streak">0</div>
+            <div class="stat-label">Current Streak</div>
+        </div>
+    </div>
+    
+    <!-- Motivational Message -->
+    <div class="motivation" id="motivation">
+        🌟 You've got this! Kuromi believes in you! 💜
+    </div>
+
+    <script>
+        // Kuromi Timer Class
+        class KuromiTimer {
+            constructor() {
+                console.log("🎀 Kuromi Timer Starting...");
+                
+                // Timer state
+                this.isRunning = false;
+                this.isPaused = false;
+                this.totalSeconds = 0;
+                this.originalSeconds = 0;
+                this.timerInterval = null;
+                this.clockInterval = null;
+                
+                // Settings
+                this.soundEnabled = true;
+                this.darkMode = false;
+                
+                // Stats
+                this.stats = {
+                    totalTime: 0,
+                    completedSessions: 0,
+                    streak: 0
+                };
+                
+                // Audio context
+                this.audioContext = null;
+                
+                // Messages
+                this.messages = [
+                    "🌟 You've got this! Kuromi believes in you! 💜",
+                    "💪 Stay focused! Every second counts! ⏰",
+                    "🎯 You're doing amazing! Keep going! ✨",
+                    "🔥 Focus mode activated! You're unstoppable! 💥",
+                    "🌸 Take a deep breath and concentrate! 🧘‍♀️"
+                ];
+                
+                // Initialize
+                this.initElements();
+                this.initEventListeners();
+                this.initClock();
+                this.updateDisplay();
+                this.loadData();
+                
+                console.log("✅ Kuromi Timer Ready!");
+            }
+            
+            initElements() {
+                // Get all elements
+                this.elements = {
+                    // Settings
+                    settingsPanel: document.getElementById('settingsPanel'),
+                    settingsBtn: document.getElementById('settingsBtn'),
+                    closeSettings: document.getElementById('closeSettings'),
+                    soundToggle: document.getElementById('soundToggle'),
+                    darkModeToggle: document.getElementById('darkModeToggle'),
+                    fullscreenBtn: document.getElementById('fullscreenBtn'),
+                    
+                    // Clock
+                    currentTime: document.getElementById('currentTime'),
+                    hourHand: document.getElementById('hourHand'),
+                    minuteHand: document.getElementById('minuteHand'),
+                    secondHand: document.getElementById('secondHand'),
+                    clockNumbers: document.getElementById('clockNumbers'),
+                    clockBody: document.getElementById('clockBody'),
+                    
+                    // Timer
+                    hoursInput: document.getElementById('hoursInput'),
+                    minutesInput: document.getElementById('minutesInput'),
+                    secondsInput: document.getElementById('secondsInput'),
+                    countdown: document.getElementById('countdown'),
+                    statusMessage: document.getElementById('statusMessage'),
+                    startBtn: document.getElementById('startBtn'),
+                    pauseBtn: document.getElementById('pauseBtn'),
+                    stopBtn: document.getElementById('stopBtn'),
+                    progressCircle: document.getElementById('progressCircle'),
+                    
+                    // Stats
+                    totalTime: document.getElementById('totalTime'),
+                    completedSessions: document.getElementById('completedSessions'),
+                    streak: document.getElementById('streak'),
+                    motivation: document.getElementById('motivation')
+                };
+                
+                // Create clock numbers
+                this.createClockNumbers();
+            }
+            
+            createClockNumbers() {
+                for (let i = 1; i <= 12; i++) {
+                    const number = document.createElement('div');
+                    number.className = 'number';
+                    number.textContent = i;
+                    
+                    const angle = (i * 30 - 90) * Math.PI / 180;
+                    const radius = 110;
+                    const x = radius * Math.cos(angle);
+                    const y = radius * Math.sin(angle);
+                    
+                    number.style.left = `calc(50% + ${x}px - 10px)`;
+                    number.style.top = `calc(50% + ${y}px - 10px)`;
+                    
+                    this.elements.clockNumbers.appendChild(number);
+                }
+            }
+            
+            initEventListeners() {
+                console.log("🔗 Setting up event listeners...");
+                
+                // Settings
+                this.elements.settingsBtn.addEventListener('click', () => this.openSettings());
+                this.elements.closeSettings.addEventListener('click', () => this.closeSettings());
+                this.elements.soundToggle.addEventListener('change', () => this.toggleSound());
+                this.elements.darkModeToggle.addEventListener('change', () => this.toggleDarkMode());
+                this.elements.fullscreenBtn.addEventListener('click', () => this.toggleFullscreen());
+                
+                // Presets
+                document.querySelectorAll('.preset-btn').forEach(btn => {
+                    btn.addEventListener('click', () => {
+                        const seconds = parseInt(btn.dataset.seconds);
+                        this.setPreset(seconds);
+                    });
+                });
+                
+                // Timer controls
+                this.elements.startBtn.addEventListener('click', () => this.startTimer());
+                this.elements.pauseBtn.addEventListener('click', () => this.pauseTimer());
+                this.elements.stopBtn.addEventListener('click', () => this.resetTimer());
+                
+                // Input changes
+                [this.elements.hoursInput, this.elements.minutesInput, this.elements.secondsInput].forEach(input => {
+                    input.addEventListener('input', () => {
+                        if (!this.isRunning) {
+                            this.updateDisplay();
+                        }
+                    });
+                });
+                
+                // Keyboard shortcuts
+                document.addEventListener('keydown', (e) => {
+                    if (e.code === 'Space' && !e.target.matches('input')) {
+                        e.preventDefault();
+                        if (this.isRunning) {
+                            this.pauseTimer();
+                        } else {
+                            this.startTimer();
+                        }
+                    } else if (e.code === 'Escape') {
+                        this.resetTimer();
+                    }
+                });
+                
+                // Initialize audio on first user interaction
+                document.addEventListener('click', () => this.initAudio(), { once: true });
+                
+                console.log("✅ Event listeners set up!");
+            }
+            
+            initClock() {
+                this.updateClock();
+                this.clockInterval = setInterval(() => this.updateClock(), 1000);
+            }
+            
+            updateClock() {
+                const now = new Date();
+                const hours = now.getHours();
+                const minutes = now.getMinutes();
+                const seconds = now.getSeconds();
+                
+                // Update digital time
+                const timeString = `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+                this.elements.currentTime.textContent = timeString;
+                
+                // Update analog clock hands
+                const hourDegrees = ((hours % 12) * 30) + (minutes * 0.5);
+                const minuteDegrees = minutes * 6;
+                const secondDegrees = seconds * 6;
+                
+                this.elements.hourHand.style.transform = `rotate(${hourDegrees}deg)`;
+                this.elements.minuteHand.style.transform = `rotate(${minuteDegrees}deg)`;
+                this.elements.secondHand.style.transform = `rotate(${secondDegrees}deg)`;
+            }
+            
+            initAudio() {
+                try {
+                    this.audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                    console.log("🎵 Audio initialized!");
+                } catch (e) {
+                    console.log("❌ Audio not supported:", e);
+                }
+            }
+            
+            playSound(frequency = 800, duration = 0.1, volume = 0.1) {
+                if (!this.soundEnabled || !this.audioContext) return;
+                
+                try {
+                    const oscillator = this.audioContext.createOscillator();
+                    const gainNode = this.audioContext.createGain();
+                    
+                    oscillator.connect(gainNode);
+                    gainNode.connect(this.audioContext.destination);
+                    
+                    oscillator.frequency.setValueAtTime(frequency, this.audioContext.currentTime);
+                    gainNode.gain.setValueAtTime(volume, this.audioContext.currentTime);
+                    gainNode.gain.exponentialRampToValueAtTime(0.01, this.audioContext.currentTime + duration);
+                    
+                    oscillator.start(this.audioContext.currentTime);
+                    oscillator.stop(this.audioContext.currentTime + duration);
+                } catch (e) {
+                    console.log("Sound error:", e);
+                }
+            }
+            
+            playTickSound() {
+                this.playSound(600, 0.05, 0.05);
+            }
+            
+            playCompleteSound() {
+                const notes = [523, 659, 784, 1047];
+                notes.forEach((note, i) => {
+                    setTimeout(() => this.playSound(note, 0.3, 0.2), i * 200);
+                });
+            }
+            
+            // Settings Functions
+            openSettings() {
+                console.log("⚙️ Opening settings...");
+                this.elements.settingsPanel.classList.add('open');
+            }
+            
+            closeSettings() {
+                console.log("✖️ Closing settings...");
+                this.elements.settingsPanel.classList.remove('open');
+            }
+            
+            toggleSound() {
+                this.soundEnabled = this.elements.soundToggle.checked;
+                console.log(`🔊 Sound: ${this.soundEnabled ? 'ON' : 'OFF'}`);
+                this.saveData();
+            }
+            
+            toggleDarkMode() {
+                this.darkMode = this.elements.darkModeToggle.checked;
+                document.body.classList.toggle('dark-mode', this.darkMode);
+                console.log(`🌙 Dark mode: ${this.darkMode ? 'ON' : 'OFF'}`);
+                this.saveData();
+            }
+            
+            toggleFullscreen() {
+                if (!document.fullscreenElement) {
+                    document.documentElement.requestFullscreen().catch(console.error);
+                } else {
+                    document.exitFullscreen().catch(console.error);
+                }
+            }
+            
+            setPreset(seconds) {
+                if (this.isRunning) return;
+                
+                const hours = Math.floor(seconds / 3600);
+                const minutes = Math.floor((seconds % 3600) / 60);
+                const secs = seconds % 60;
+                
+                this.elements.hoursInput.value = hours;
+                this.elements.minutesInput.value = minutes;
+                this.elements.secondsInput.value = secs;
+                
+                this.updateDisplay();
+                this.closeSettings();
+                this.showNotification(`Timer set to ${minutes > 0 ? minutes + 'm' : ''}${secs > 0 ? secs + 's' : ''}`, 'success');
+            }
+            
+            // Timer Functions
+            startTimer() {
+                console.log("▶️ Starting timer...");
+                
+                if (!this.isRunning && !this.isPaused) {
+                    // New timer - get time from inputs
+                    const hours = parseInt(this.elements.hoursInput.value) || 0;
+                    const minutes = parseInt(this.elements.minutesInput.value) || 0;
+                    const seconds = parseInt(this.elements.secondsInput.value) || 0;
+                    
+                    this.totalSeconds = hours * 3600 + minutes * 60 + seconds;
+                    this.originalSeconds = this.totalSeconds;
+                }
+                
+                if (this.totalSeconds <= 0) {
+                    this.showNotification('Please set a time greater than 0!', 'error');
+                    return;
+                }
+                
+                this.isRunning = true;
+                this.isPaused = false;
+                
+                // Update UI
+                this.elements.startBtn.style.display = 'none';
+                this.elements.pauseBtn.style.display = 'flex';
+                this.elements.statusMessage.textContent = 'Stay focused! You can do this! 💪';
+                document.body.classList.add('timer-active');
+                
+                // Disable inputs
+                this.elements.hoursInput.disabled = true;
+                this.elements.minutesInput.disabled = true;
+                this.elements.secondsInput.disabled = true;
+                
+                // Start countdown
+                this.timerInterval = setInterval(() => {
+                    this.totalSeconds--;
+                    this.updateDisplay();
+                    this.updateProgress();
+                    this.playTickSound();
+                    
+                    // Urgent mode in last 10 seconds
+                    if (this.totalSeconds <= 10 && this.totalSeconds > 0) {
+                        document.body.classList.add('timer-urgent');
+                    }
+                    
+                    // Timer complete
+                    if (this.totalSeconds <= 0) {
+                        this.completeTimer();
+                    }
+                }, 1000);
+                
+                this.randomizeMessage();
+            }
+            
+            pauseTimer() {
+                console.log("⏸️ Pausing timer...");
+                
+                this.isRunning = false;
+                this.isPaused = true;
+                
+                // Update UI
+                this.elements.startBtn.style.display = 'flex';
+                this.elements.pauseBtn.style.display = 'none';
+                this.elements.statusMessage.textContent = 'Paused - Take a breath! 😌';
+                document.body.classList.remove('timer-active', 'timer-urgent');
+                
+                clearInterval(this.timerInterval);
+            }
+            
+            resetTimer() {
+                console.log("⏹️ Resetting timer...");
+                
+                this.isRunning = false;
+                this.isPaused = false;
+                this.totalSeconds = 0;
+                
+                // Update UI
+                this.elements.startBtn.style.display = 'flex';
+                this.elements.pauseBtn.style.display = 'none';
+                this.elements.statusMessage.textContent = 'Ready to focus! 💜';
+                document.body.classList.remove('timer-active', 'timer-urgent', 'timer-complete');
+                
+                // Enable inputs
+                this.elements.hoursInput.disabled = false;
+                this.elements.minutesInput.disabled = false;
+                this.elements.secondsInput.disabled = false;
+                
+                clearInterval(this.timerInterval);
+                this.updateDisplay();
+                this.updateProgress();
+                this.randomizeMessage();
+            }
+            
+            completeTimer() {
+                console.log("🎉 Timer complete!");
+                
+                this.isRunning = false;
+                this.isPaused = false;
+                this.totalSeconds = 0;
+                
+                // Update UI
+                this.elements.startBtn.style.display = 'flex';
+                this.elements.pauseBtn.style.display = 'none';
+                this.elements.statusMessage.textContent = 'Great job! Session complete! 🎉';
+                document.body.classList.remove('timer-active', 'timer-urgent');
+                document.body.classList.add('timer-complete');
+                
+                // Enable inputs
+                this.elements.hoursInput.disabled = false;
+                this.elements.minutesInput.disabled = false;
+                this.elements.secondsInput.disabled = false;
+                
+                // Update stats
+                this.stats.completedSessions++;
+                this.stats.totalTime += this.originalSeconds;
+                this.stats.streak++;
+                this.updateStats();
+                this.saveData();
+                
+                // Play sound and show notification
+                this.playCompleteSound();
+                this.showNotification('🎉 Session complete! Well done! 💜', 'success');
+                
+                clearInterval(this.timerInterval);
+                
+                // Remove complete animation after delay
+                setTimeout(() => {
+                    document.body.classList.remove('timer-complete');
+                    this.updateDisplay();
+                    this.updateProgress();
+                    this.randomizeMessage();
+                }, 3000);
+            }
+            
+            // Display Functions
+            updateDisplay() {
+                let displaySeconds;
+                
+                if ((this.isRunning || this.isPaused) && this.totalSeconds >= 0) {
+                    displaySeconds = this.totalSeconds;
+                } else {
+                    const hours = parseInt(this.elements.hoursInput.value) || 0;
+                    const minutes = parseInt(this.elements.minutesInput.value) || 0;
+                    const seconds = parseInt(this.elements.secondsInput.value) || 0;
+                    displaySeconds = hours * 3600 + minutes * 60 + seconds;
+                }
+                
+                const hours = Math.floor(displaySeconds / 3600);
+                const minutes = Math.floor((displaySeconds % 3600) / 60);
+                const secs = displaySeconds % 60;
+                
+                let timeString;
+                if (hours > 0) {
+                    timeString = `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+                } else {
+                    timeString = `${minutes.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+                }
+                
+                this.elements.countdown.textContent = timeString;
+            }
+            
+            updateProgress() {
+                if (this.originalSeconds > 0) {
+                    const progress = (this.originalSeconds - this.totalSeconds) / this.originalSeconds;
+                    const circumference = 2 * Math.PI * 150;
+                    const offset = circumference - (progress * circumference);
+                    this.elements.progressCircle.style.strokeDashoffset = offset;
+                } else {
+                    this.elements.progressCircle.style.strokeDashoffset = 942;
+                }
+            }
+            
+            updateStats() {
+                this.elements.totalTime.textContent = this.formatTime(this.stats.totalTime);
+                this.elements.completedSessions.textContent = this.stats.completedSessions;
+                this.elements.streak.textContent = this.stats.streak;
+            }
+            
+            formatTime(seconds) {
+                const hours = Math.floor(seconds / 3600);
+                const minutes = Math.floor((seconds % 3600) / 60);
+                
+                if (hours > 0) {
+                    return `${hours}h ${minutes}m`;
+                } else if (minutes > 0) {
+                    return `${minutes}m`;
+                } else {
+                    return `${seconds}s`;
+                }
+            }
+            
+            randomizeMessage() {
+                const randomMessage = this.messages[Math.floor(Math.random() * this.messages.length)];
+                this.elements.motivation.textContent = randomMessage;
+            }
+            
+            showNotification(message, type = 'success') {
+                const notification = document.createElement('div');
+                notification.className = `notification ${type}`;
+                notification.textContent = message;
+                document.body.appendChild(notification);
+                
+                setTimeout(() => {
+                    notification.remove();
+                }, 3000);
+            }
+            
+            // Data Functions (using memory since localStorage not supported in artifacts)
+            saveData() {
+                // In real implementation, would use localStorage
+                console.log("💾 Data saved:", { stats: this.stats, soundEnabled: this.soundEnabled, darkMode: this.darkMode });
+            }
+            
+            loadData() {
+                // In real implementation, would load from localStorage
+                this.updateStats();
+                this.elements.soundToggle.checked = this.soundEnabled;
+                this.elements.darkModeToggle.checked = this.darkMode;
+                
+                if (this.darkMode) {
+                    document.body.classList.add('dark-mode');
+                }
+                
+                this.randomizeMessage();
+            }
+        }
+        
+        // Initialize when page loads
+        document.addEventListener('DOMContentLoaded', () => {
+            console.log("🚀 Page loaded, creating Kuromi Timer...");
+            window.kuromiTimer = new KuromiTimer();
+        });
+        
+        // Add some extra event listeners for better UX
+        document.addEventListener('click', (e) => {
+            const settingsPanel = document.getElementById('settingsPanel');
+            const settingsBtn = document.getElementById('settingsBtn');
+            
+            if (!settingsPanel.contains(e.target) && !settingsBtn.contains(e.target)) {
+                settingsPanel.classList.remove('open');
+            }
+        });
+        
+        // Prevent form submission on enter
+        document.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter' && e.target.matches('input[type="number"]')) {
+                e.preventDefault();
+                e.target.blur();
+            }
+        });
+    </script>
+</body>
+</html>
